@@ -1,0 +1,37 @@
+version: '1.0'
+services:
+  web:
+    image: odoo:$ODOO_VERSION
+    depends_on:
+      db:
+        condition: service_started
+    ports:
+      - "$ODOO_PORT:8069"
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - ./config:/etc/odoo
+      - ./addons:/mnt/extra-addons
+    environment:
+      - PASSWORD_FILE=/run/secrets/postgresql_password
+    secrets:
+      - postgresql_password
+  db:
+    image: postgres:$DB_VERSION
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRESS_NAME=$DB_NAME
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgresql_password
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    secrets:
+      - postgresql_password
+volumes:
+  odoo-web-data:
+  odoo-db-data:
+
+secrets:
+  postgresql_password:
+    file: $PWD_FILE
